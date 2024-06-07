@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 const ejs = require('ejs');
 const path = require('path');
+const { error } = require('console');
 
 const app = express();
 const port = 3000;
@@ -35,6 +36,28 @@ app.set('views', path.join(__dirname, 'views'));
 app.get(['/', '/home'], (req, res) => {
   res.render('home');
 });
+
+app.get('/acervo', (req, res) => {
+  db.query('select a.nome as autor, l.titulo, l.ISBN, l.ano_publicacao from livro l join autor a on l.id_autor = a.id_autor', (error, results) => {
+    if (error){
+      console.log('houve um error ao recuperar os livros')
+    } else {
+      res.render('acervo', {livros: results})
+  }
+  })
+});
+
+app.get('/pesquisarLivros', (req, res) =>{
+  const pesquisa = req.query.pesquisa
+  console.log(pesquisa)
+  db.query('select a.nome as autor, l.titulo, l.ISBN, l.ano_publicacao from livro l join autor a on l.id_autor = a.id_autor where l.titulo like ? or a.nome like ?;', [`%${pesquisa}%`, `%${pesquisa}%`], (error, results) => {
+    if (error){
+      console.log('Ocorreu um erro ao utilizar o filtro')
+    } else {
+      res.render ('acervo', {livros: results})
+    }
+})
+})
 
 app.listen(port, () => {
   console.log(`Servidor iniciado em http://localhost:${port}`);
