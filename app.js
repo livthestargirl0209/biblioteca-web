@@ -59,6 +59,64 @@ app.get('/pesquisarLivros', (req, res) =>{
 })
 })
 
+const carregarAutores = (callback) => {
+  db.query('select * from autor order by nome', (error, results) =>{
+    if(error){
+      console.log('Erro ao carregar autores', error)
+    } else {
+      const autores = results.map(result => result)
+      callback(null, autores)
+    }
+  })
+}
+
+app.get('/livro', (req, res) =>{
+  const ISBN = req.query.ISBN
+  console.log(ISBN)
+  carregarAutores((error, listaAutores) => {
+    db.query('select * from livro where ISBN=?', [ISBN], (error, results) =>{
+      if(error){
+        console.log('erro ao buscar o livro com ISBN', ISBN)
+      }else {
+        if(results.length > 0){
+          res.render('livro', {autores: listaAutores, livro: results [0]})
+        }else{
+          console.log('livro não encontrado')
+        }
+      }
+    })
+  })
+})
+
+app.post('/editarLivro', (res, req) => {
+  const ISBN = parseInt(req.body.inputISBN)
+  const id_autor = parseInt(req.body.inputAutor)
+  const titulo = (req.body.inputTitulo)
+  const ano_publicacao = (req.body.inputAnoPublicacao)
+  const genero = (req.body.inputGenero)
+  const resumo = (req.body.textResumo)
+
+  db.query('UPDATE livro SET ISBN = ?, titulo = ?, id_autor = ?,ano_publicacao = ?, genero = ?, resumo = ? WHERE ISBN = ?',[ISBN, titulo, id_autor, ano_publicacao, genero, resumo, ISBN], (error, results) => {
+    if (error){
+      console.log ('erro ao editar o livro')
+    } else {
+      res.redirect('/acervo')
+    }
+  })
+})
+
+app.post('/exluirLivro:1500', (req, res) => {
+  const ISBN = parseInt(req.params.ISBN)
+  console.log(ISBN)
+  db.query('dlete from livro where ISBN = ?', [ISBN], (error, results) => {
+    if (error){
+      console.log('Erro ao excluir livro', error)
+    } else { 
+      res.redirect('/acervo')
+    }
+  })
+})
+
 app.listen(port, () => {
   console.log(`Servidor iniciado em http://localhost:${port}`);
 });
